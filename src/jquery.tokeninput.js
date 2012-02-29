@@ -14,6 +14,7 @@ var DEFAULT_SETTINGS = {
     // Search settings
     method: "GET",
     queryParam: "q",
+    placeholder: null,
     searchDelay: 300,
     minChars: 1,
     propertyToSearch: "name",
@@ -296,6 +297,9 @@ $.TokenList = function (input, url_or_data, settings) {
             }
         });
 
+    if (settings.placeholder)
+        input_box.attr("placeholder", settings.placeholder)
+
     // Keep a reference to the original input box
     var hidden_input = $(input)
                            .hide()
@@ -383,11 +387,12 @@ $.TokenList = function (input, url_or_data, settings) {
         });
     }
 
+    // Resize input to maximum width so the placeholder can be seen
+    resize_input();
     // Check if widget should initialize as disabled
     if (settings.disabled) {
         toggleDisabled(true);
     }
-
     // Initialization is done
     if($.isFunction(settings.onReady)) {
         settings.onReady.call();
@@ -467,10 +472,14 @@ $.TokenList = function (input, url_or_data, settings) {
     function resize_input() {
         if(input_val === (input_val = input_box.val())) {return;}
 
+        // Get width left on the current line
+        var width_left = token_list.width() - input_box.offset().left - token_list.offset().left;
         // Enter new content into resizer and resize input accordingly
         var escaped = input_val.replace(/&/g, '&amp;').replace(/\s/g,' ').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         input_resizer.html(escaped);
-        input_box.width(input_resizer.width() + 30);
+        // Get maximum width, minimum the size of input and maximum the widget's width
+        input_box.width(Math.min(token_list.width(), 
+                                 Math.max(width_left, input_resizer.width() + 30)));
     }
 
     function is_printable_character(keycode) {
@@ -544,6 +553,9 @@ $.TokenList = function (input, url_or_data, settings) {
                 return;
             }
         }
+
+        // Squeeze input_box so we force no unnecessary line break
+        input_box.width(0);
 
         // Insert the new tokens
         if(settings.tokenLimit == null || token_count < settings.tokenLimit) {
